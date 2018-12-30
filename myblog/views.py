@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django import forms
+from django.utils import timezone
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template import loader
 from django.contrib.auth.models import User, Group
@@ -6,6 +8,7 @@ from rest_framework import viewsets
 
 from myblog.models import Post, Category
 from myblog.serializers import UserSerializer, GroupSerializer, PostSerializer, CatergorySerializer
+from myblog.forms import PostForm
 
 
 def stub_view(request, *args, **kwargs):
@@ -34,6 +37,21 @@ def detail_view(request, post_id):
         raise Http404
     context = {'post': post}
     return render(request, 'detail.html', context)
+
+
+def add_model(request):
+    if request.method == "POST":
+        form = PostForm(request.POST)
+        if form.is_valid():
+            model_instance = form.save(commit=False)
+            model_instance.created_date = timezone.now()
+            model_instance.modified_date = timezone.now()
+            model_instance.published_date = timezone.now()
+            model_instance.save()
+            return redirect('/')
+    else:
+        form = PostForm()
+        return render(request, "post_template.html", {'form': form})
 
 
 class UserViewSet(viewsets.ModelViewSet):
